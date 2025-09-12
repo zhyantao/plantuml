@@ -1,9 +1,8 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify
 import os
-import tempfile
 import subprocess
 import base64
-from pathlib import Path
+import uuid
 
 app = Flask(__name__)
 
@@ -23,15 +22,23 @@ def generate_diagram():
     uml_code = request.json.get('code', '')
     output_format = request.json.get('format', 'svg')
     
+    print(f"生成图表，格式: {output_format}")
+    print(f"临时目录: {TEMP_DIR}")
+    print(f"JAR目录: {JAR_DIR}")
+    
     if not uml_code:
         return jsonify({'error': 'No PlantUML code provided'}), 400
     
-    # 创建临时文件
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.uml', dir=TEMP_DIR, delete=False) as f:
-        f.write(uml_code)
-        uml_file = f.name
+    # 生成唯一文件名，避免冲突
+    file_id = str(uuid.uuid4())
+    uml_file = os.path.join(TEMP_DIR, f"{file_id}.uml")
+    output_file = os.path.join(TEMP_DIR, f"{file_id}.{output_format}")
     
     try:
+        # 写入UML代码到临时文件
+        with open(uml_file, 'w', encoding='utf-8') as f:
+            f.write(uml_code)
+        
         # 设置Java命令
         cmd = [
             'java', 
@@ -45,21 +52,25 @@ def generate_diagram():
         # 添加额外的JAR文件到类路径
         env = os.environ.copy()
         jar_files = [f for f in os.listdir(JAR_DIR) if f.endswith('.jar') and f != 'plantuml-1.2024.6.jar']
-        classpath = os.pathsep.join([os.path.join(JAR_DIR, jar) for jar in jar_files])
-        if classpath:
+        if jar_files:
+            classpath = os.pathsep.join([os.path.join(JAR_DIR, jar) for jar in jar_files])
             env['CLASSPATH'] = classpath
         
         # 执行PlantUML
-        result = subprocess.run(cmd, capture_output=True, text=True, env=env)
-        
+        result = subprocess.run(cmd, capture_output=True, text=True, env=env, cwd=TEMP_DIR)
+        print(f"命令执行结果: {result.returncode}")
+        print(f"标准输出: {result.stdout}")
+        if result.stderr:
+            print(f"错误输出: {result.stderr}")
+
         if result.returncode != 0:
             return jsonify({'error': result.stderr}), 500
         
-        # 读取生成的图像文件
-        output_file = uml_file + '.' + output_format
+        # 检查输出文件是否存在
         if not os.path.exists(output_file):
-            return jsonify({'error': '生成图表失败'}), 500
+            return jsonify({'error': '生成图表失败，输出文件不存在'}), 500
         
+        # 读取生成的图像文件
         if output_format == 'svg':
             with open(output_file, 'r', encoding='utf-8') as f:
                 svg_content = f.read()
@@ -78,12 +89,12 @@ def generate_diagram():
     finally:
         # 清理临时文件
         try:
-            os.unlink(uml_file)
-            output_file = uml_file + '.' + output_format
+            if os.path.exists(uml_file):
+                os.unlink(uml_file)
             if os.path.exists(output_file):
                 os.unlink(output_file)
-        except:
-            pass
+        except Exception as e:
+            print(f"清理文件时出错: {e}")
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

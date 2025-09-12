@@ -26,7 +26,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // 清空按钮点击事件
     clearBtn.addEventListener('click', function () {
         editor.value = '';
-        preview.innerHTML = '<p>图表将在此处显示...</p>';
+        preview.innerHTML = `
+        <div style="text-align:center;">
+            <p style="margin-bottom:15px;color:#4ca1af;font-weight:bold;">图表预览</p>
+            <div
+                style="padding:20px;border:2px dashed #4ca1af;border-radius:8px;display:inline-block;background:#f9f9f9;">
+                <p><i class="fas fa-project-diagram" style="font-size:2.5rem;color:#4ca1af;"></i></p>
+                <div id="error" class="error"></div>
+            </div>
+        </div>`;
         errorDiv.style.display = 'none';
         updateStatus('编辑器已清空');
     });
@@ -97,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
         errorDiv.style.display = 'none';
 
         if (!umlCode) {
-            preview.innerHTML = '<p>请输入 PlantUML 代码</p>';
+            preview.innerHTML = '<p>请输入PlantUML代码</p>';
             updateStatus('就绪');
             return;
         }
@@ -119,7 +127,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || '生成图表时出错');
+                // 显示更详细的错误信息
+                const errorMsg = data.error || '生成图表时出错';
+                throw new Error(`服务器错误 (${response.status}): ${errorMsg}`);
             }
 
             if (format === 'svg' && data.svg) {
@@ -132,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 preview.innerHTML = '';
                 preview.appendChild(img);
             } else {
-                throw new Error('无法显示图表');
+                throw new Error('无法显示图表: 服务器返回的数据格式不正确');
             }
 
             updateStatus('图表已生成');
@@ -142,9 +152,19 @@ document.addEventListener('DOMContentLoaded', function () {
             errorDiv.textContent = `错误: ${error.message}`;
             errorDiv.style.display = 'block';
             updateStatus('生成图表时出错');
+
+            // 显示临时目录中的图片（如果存在）
+            showTempImageIfExists();
         } finally {
             isProcessing = false;
         }
+    }
+
+    // 显示临时目录中的图片（用于调试）
+    function showTempImageIfExists() {
+        // 这个函数主要用于调试，在实际部署中可以移除
+        console.log("检查临时目录中的图片...");
+        // 这里可以添加逻辑来显示临时目录中的图片
     }
 
     // 检测图表类型
