@@ -3,8 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PlantUML 实时编辑器</title>
-    <script src="plantuml-1.2024.6.jar" type="text/javascript"></script>
+    <title>PlantUML 实时图表生成器</title>
     <style>
       * {
         box-sizing: border-box;
@@ -16,29 +15,30 @@
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         line-height: 1.6;
         color: #333;
-        background-color: #f5f7fa;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         padding: 20px;
+        min-height: 100vh;
       }
 
       .container {
         max-width: 1400px;
         margin: 0 auto;
         background-color: white;
-        border-radius: 10px;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         overflow: hidden;
       }
 
       header {
         background: linear-gradient(135deg, #2c3e50, #4ca1af);
         color: white;
-        padding: 20px;
+        padding: 25px;
         text-align: center;
       }
 
       h1 {
-        font-size: 2.2rem;
-        margin-bottom: 10px;
+        font-size: 2.5rem;
+        margin-bottom: 15px;
       }
 
       .description {
@@ -62,20 +62,20 @@
       .editor-panel,
       .preview-panel {
         flex: 1;
-        padding: 20px;
+        padding: 25px;
       }
 
       .panel-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
         border-bottom: 2px solid #eee;
       }
 
       .panel-title {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
         font-weight: 600;
         color: #2c3e50;
       }
@@ -84,46 +84,55 @@
         width: 100%;
         height: 500px;
         border: 1px solid #ddd;
-        border-radius: 5px;
-        padding: 15px;
-        font-family: "Courier New", monospace;
-        font-size: 14px;
+        border-radius: 8px;
+        padding: 20px;
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 15px;
+        line-height: 1.5;
         resize: none;
-        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: border-color 0.3s;
+      }
+
+      .editor:focus {
+        outline: none;
+        border-color: #4ca1af;
+        box-shadow: inset 0 2px 4px rgba(76, 161, 175, 0.2);
       }
 
       .preview {
         width: 100%;
         min-height: 500px;
         border: 1px solid #ddd;
-        border-radius: 5px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
         background: #f9f9f9;
         overflow: auto;
-        padding: 20px;
+        padding: 25px;
       }
 
       .preview img {
         max-width: 100%;
-      }
-
-      .toolbar {
-        display: flex;
-        justify-content: space-between;
-        padding: 15px 20px;
-        background-color: #f0f4f8;
-        border-top: 1px solid #ddd;
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
 
       .btn {
-        padding: 10px 20px;
+        padding: 12px 25px;
         border: none;
-        border-radius: 5px;
+        border-radius: 8px;
         cursor: pointer;
         font-weight: 600;
         transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn i {
+        font-size: 1.1rem;
       }
 
       .btn-primary {
@@ -134,7 +143,7 @@
       .btn-primary:hover {
         background: linear-gradient(135deg, #4ca1af, #2c3e50);
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
       }
 
       .btn-secondary {
@@ -144,68 +153,108 @@
 
       .btn-secondary:hover {
         background: #dee2e6;
+        transform: translateY(-2px);
       }
 
       .examples {
-        margin-top: 20px;
-        padding: 20px;
+        margin-top: 25px;
+        padding: 25px;
         background-color: #f8f9fa;
-        border-radius: 5px;
+        border-radius: 8px;
       }
 
       .examples h3 {
-        margin-bottom: 15px;
+        margin-bottom: 18px;
         color: #2c3e50;
+        font-size: 1.3rem;
       }
 
       .example-buttons {
         display: flex;
-        gap: 10px;
+        gap: 12px;
         flex-wrap: wrap;
       }
 
       .example-btn {
-        padding: 8px 15px;
-        background-color: #e9ecef;
+        padding: 10px 18px;
+        background: linear-gradient(135deg, #e9ecef, #dee2e6);
         border: none;
-        border-radius: 5px;
+        border-radius: 6px;
         cursor: pointer;
         transition: all 0.2s ease;
+        font-weight: 500;
       }
 
       .example-btn:hover {
-        background-color: #4ca1af;
+        background: linear-gradient(135deg, #4ca1af, #2c3e50);
         color: white;
+        transform: translateY(-2px);
       }
 
       .status {
-        padding: 10px 20px;
+        padding: 15px 25px;
         background-color: #f0f4f8;
         text-align: center;
         font-style: italic;
         color: #6c757d;
         border-top: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(76, 161, 175, 0.3);
+        border-radius: 50%;
+        border-top-color: #4ca1af;
+        animation: spin 1s ease-in-out infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
       }
 
       footer {
         text-align: center;
-        margin-top: 20px;
+        margin-top: 30px;
         color: #6c757d;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
+      }
+
+      .error {
+        color: #e74c3c;
+        padding: 15px;
+        background-color: #fdeded;
+        border-radius: 5px;
+        margin-top: 15px;
+        display: none;
       }
     </style>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
   </head>
   <body>
     <div class="container">
-      <header>
-        <h1>PlantUML 实时编辑器</h1>
-      </header>
-
       <div class="main-content">
         <div class="editor-panel">
           <div class="panel-header">
-            <div class="panel-title">编辑区</div>
-            <button class="btn btn-secondary" id="clear-btn">清空</button>
+            <div class="panel-title"><i class="fas fa-edit"></i> 编辑区</div>
+            <button class="btn btn-primary" id="render-btn">
+              <i class="fas fa-sync-alt"></i> 生成图表
+            </button>
+            <button class="btn btn-secondary" id="format-btn">
+              <i class="fas fa-indent"></i> 格式化代码
+            </button>
+            <button class="btn btn-secondary" id="clear-btn">
+              <i class="fas fa-broom"></i> 清空
+            </button>
           </div>
           <textarea
             id="uml-editor"
@@ -213,6 +262,11 @@
             placeholder="在此处编写您的PlantUML代码..."
           >
 @startuml
+skinparam backgroundColor #f9f9f9
+skinparam sequenceArrowColor #4ca1af
+skinparam sequenceActorBorderColor #2c3e50
+skinparam sequenceLifeLineBorderColor #2c3e50
+
 actor 用户 as user
 participant "Web浏览器" as browser
 participant "服务器" as server
@@ -228,36 +282,47 @@ browser -> user: 显示生成的图表
 
         <div class="preview-panel">
           <div class="panel-header">
-            <div class="panel-title">预览区</div>
-            <button class="btn btn-primary" id="export-btn">导出PNG</button>
+            <div class="panel-title"><i class="fas fa-image"></i> 预览区</div>
+            <button class="btn btn-primary" id="export-btn">
+              <i class="fas fa-download"></i> 导出SVG
+            </button>
           </div>
           <div id="preview" class="preview">
             <p>图表将在此处显示...</p>
           </div>
+          <div id="error" class="error"></div>
         </div>
       </div>
 
       <div class="examples">
-        <h3>示例代码</h3>
+        <h3><i class="fas fa-lightbulb"></i> 示例代码</h3>
         <div class="example-buttons">
-          <button class="example-btn" data-example="sequence">序列图</button>
-          <button class="example-btn" data-example="usecase">用例图</button>
-          <button class="example-btn" data-example="class">类图</button>
-          <button class="example-btn" data-example="activity">活动图</button>
-          <button class="example-btn" data-example="component">组件图</button>
+          <button class="example-btn" data-example="sequence">
+            <i class="fas fa-exchange-alt"></i> 序列图
+          </button>
+          <button class="example-btn" data-example="usecase">
+            <i class="fas fa-use-case"></i> 用例图
+          </button>
+          <button class="example-btn" data-example="class">
+            <i class="fas fa-cubes"></i> 类图
+          </button>
+          <button class="example-btn" data-example="activity">
+            <i class="fas fa-running"></i> 活动图
+          </button>
+          <button class="example-btn" data-example="component">
+            <i class="fas fa-puzzle-piece"></i> 组件图
+          </button>
         </div>
       </div>
 
-      <div class="toolbar">
-        <button class="btn btn-primary" id="render-btn">生成图表</button>
-        <button class="btn btn-secondary" id="format-btn">格式化代码</button>
+      <div class="status" id="status">
+        <div class="spinner" id="spinner" style="display: none"></div>
+        <span id="status-text">就绪</span>
       </div>
-
-      <div class="status" id="status">就绪</div>
     </div>
 
     <footer>
-      <p>PlantUML 实时编辑器 &copy; 2023 | 使用 PlantUML 库版本 1.2024.6</p>
+      <p>PlantUML 实时图表生成器 &copy; 2023 | 使用 PlantUML 库版本 1.2024.6</p>
     </footer>
 
     <script>
@@ -268,8 +333,13 @@ browser -> user: 显示生成的图表
         const clearBtn = document.getElementById("clear-btn");
         const exportBtn = document.getElementById("export-btn");
         const formatBtn = document.getElementById("format-btn");
-        const status = document.getElementById("status");
+        const statusText = document.getElementById("status-text");
+        const spinner = document.getElementById("spinner");
+        const errorDiv = document.getElementById("error");
         const exampleBtns = document.querySelectorAll(".example-btn");
+
+        // 设置初始状态
+        let isProcessing = false;
 
         // 初始渲染
         renderDiagram();
@@ -284,19 +354,35 @@ browser -> user: 显示生成的图表
         clearBtn.addEventListener("click", function () {
           editor.value = "";
           preview.innerHTML = "<p>图表将在此处显示...</p>";
-          status.textContent = "编辑器已清空";
+          errorDiv.style.display = "none";
+          updateStatus("编辑器已清空");
         });
 
         // 导出按钮点击事件
         exportBtn.addEventListener("click", function () {
-          status.textContent = "导出功能需要服务器端支持";
-          alert("在完整实现中，这里将导出PNG图像。当前为演示版本。");
+          updateStatus("正在导出...");
+
+          // 在实际实现中，这里会调用导出功能
+          setTimeout(() => {
+            updateStatus("导出完成 (模拟)");
+            alert("在完整实现中，这里将导出SVG图像。当前为演示版本。");
+          }, 1000);
         });
 
         // 格式化按钮点击事件
         formatBtn.addEventListener("click", function () {
-          status.textContent = "格式化功能需要额外实现";
-          alert("在完整实现中，这里将格式化PlantUML代码。当前为演示版本。");
+          updateStatus("正在格式化代码...");
+
+          // 模拟格式化过程
+          setTimeout(() => {
+            const code = editor.value;
+            // 简单的格式化：确保@startuml和@enduml单独成行
+            editor.value = code
+              .replace(/\s*@startuml\s*/g, "\n@startuml\n")
+              .replace(/\s*@enduml\s*/g, "\n@enduml\n")
+              .replace(/\n{3,}/g, "\n\n");
+            updateStatus("代码已格式化");
+          }, 500);
         });
 
         // 示例按钮点击事件
@@ -320,42 +406,92 @@ browser -> user: 显示生成的图表
           };
         }
 
+        // 更新状态函数
+        function updateStatus(message, showSpinner = false) {
+          statusText.textContent = message;
+          spinner.style.display = showSpinner ? "block" : "none";
+        }
+
         // 渲染图表函数
         function renderDiagram() {
+          if (isProcessing) return;
+
           const umlCode = editor.value.trim();
-          status.textContent = "正在生成图表...";
+          updateStatus("正在生成图表...", true);
+          errorDiv.style.display = "none";
 
           if (!umlCode) {
             preview.innerHTML = "<p>请输入PlantUML代码</p>";
-            status.textContent = "就绪";
+            updateStatus("就绪");
             return;
           }
 
-          try {
-            // 在实际实现中，这里会调用PlantUML库来生成图表
-            // 由于浏览器限制，完整的PlantUML渲染可能需要服务器支持
-            // 这里使用模拟渲染
+          isProcessing = true;
 
-            // 模拟渲染延迟
+          try {
+            // 在实际实现中，这里会调用PlantUML的Java库
+            // 由于浏览器限制，完整的PlantUML渲染需要服务器支持
+            // 这里使用模拟渲染，但模拟真实的延迟
+
             setTimeout(() => {
+              // 检查代码是否包含必要的标记
+              if (
+                !umlCode.includes("@startuml") ||
+                !umlCode.includes("@enduml")
+              ) {
+                throw new Error("PlantUML代码必须包含@startuml和@enduml标记");
+              }
+
+              // 模拟渲染结果
               preview.innerHTML = `
                             <div style="text-align:center;">
                                 <p style="margin-bottom:15px;color:#4ca1af;font-weight:bold;">图表预览</p>
-                                <div style="padding:20px;border:2px dashed #4ca1af;border-radius:5px;display:inline-block;">
+                                <div style="padding:20px;border:2px dashed #4ca1af;border-radius:8px;display:inline-block;background:#f9f9f9;">
+                                    <p><i class="fas fa-project-diagram" style="font-size:2.5rem;color:#4ca1af;"></i></p>
                                     <p>实际图表渲染需要</p>
                                     <p>完整的PlantUML服务器环境</p>
                                 </div>
-                                <p style="margin-top:15px;font-size:0.9rem;color:#6c757d;">
-                                    当前代码行数: ${umlCode.split("\n").length}
-                                </p>
+                                <div style="margin-top:20px;padding:15px;background:#f0f4f8;border-radius:8px;text-align:left;max-width:400px;margin:20px auto;">
+                                    <p style="font-weight:bold;margin-bottom:10px;">渲染信息:</p>
+                                    <p>代码行数: ${
+                                      umlCode.split("\n").length
+                                    }</p>
+                                    <p>字符数: ${umlCode.length}</p>
+                                    <p>图表类型: ${detectDiagramType(
+                                      umlCode
+                                    )}</p>
+                                </div>
                             </div>
                         `;
-              status.textContent = "图表已生成 (模拟)";
-            }, 500);
+              updateStatus("图表已生成 (模拟)");
+              isProcessing = false;
+            }, 1500);
           } catch (error) {
-            preview.innerHTML = `<p style="color:red;">错误: ${error.message}</p>`;
-            status.textContent = "生成图表时出错";
+            errorDiv.textContent = `错误: ${error.message}`;
+            errorDiv.style.display = "block";
+            updateStatus("生成图表时出错");
+            isProcessing = false;
           }
+        }
+
+        // 检测图表类型
+        function detectDiagramType(code) {
+          if (
+            code.includes("sequence") ||
+            code.includes("actor") ||
+            code.includes("participant")
+          ) {
+            return "序列图";
+          } else if (code.includes("usecase")) {
+            return "用例图";
+          } else if (code.includes("class")) {
+            return "类图";
+          } else if (code.includes("activity")) {
+            return "活动图";
+          } else if (code.includes("component")) {
+            return "组件图";
+          }
+          return "未知类型";
         }
 
         // 加载示例代码
@@ -365,52 +501,52 @@ browser -> user: 显示生成的图表
           switch (type) {
             case "sequence":
               exampleCode = `@startuml
-actor User
-participant "First Component" as A
-participant "Second Component" as B
-participant "Last Component" as C
+skinparam backgroundColor #f9f9f9
+skinparam sequenceArrowColor #4ca1af
 
-User -> A: DoWork
-activate A
+actor 用户 as User
+participant "客户端" as Client
+participant "服务器" as Server
+participant "数据库" as Database
 
-A -> B: CreateRequest
-activate B
-
-B -> C: DoWork
-activate C
-C --> B: WorkDone
-destroy C
-
-B --> A: RequestCreated
-deactivate B
-
-A --> User: Done
-deactivate A
+User -> Client: 输入请求
+Client -> Server: 发送API请求
+Server -> Database: 查询数据
+Database --> Server: 返回数据
+Server --> Client: 返回响应
+Client --> User: 显示结果
 @enduml`;
               break;
 
             case "usecase":
               exampleCode = `@startuml
+skinparam backgroundColor #f9f9f9
+skinparam usecaseBorderColor #2c3e50
+skinparam usecaseBackgroundColor #4ca1af
+skinparam usecaseFontColor white
+
 left to right direction
-actor Guest as g
-actor Customer as c
-actor "Admin" as a
+actor 客户 as Customer
+actor 管理员 as Admin
 
-usecase "View Products" as UC1
-usecase "Purchase" as UC2
-usecase "Manage Products" as UC3
-usecase "Manage Users" as UC4
+usecase (浏览商品) as UC1
+usecase (购买商品) as UC2
+usecase (管理库存) as UC3
+usecase (查看报表) as UC4
 
-g --> UC1
-c --> UC1
-c --> UC2
-a --> UC3
-a --> UC4
+Customer --> UC1
+Customer --> UC2
+Admin --> UC3
+Admin --> UC4
 @enduml`;
               break;
 
             case "class":
               exampleCode = `@startuml
+skinparam backgroundColor #f9f9f9
+skinparam classBorderColor #2c3e50
+skinparam classBackgroundColor #e9ecef
+
 class ArrayList {
   - Object[] elementData
   - int size
@@ -446,8 +582,12 @@ List <|.. LinkedList
 
             case "activity":
               exampleCode = `@startuml
+skinparam backgroundColor #f9f9f9
+skinparam activityBorderColor #2c3e50
+skinparam activityBackgroundColor #4ca1af
+
 start
-:登录网站;
+:登录系统;
 if (用户名和密码正确?) then (是)
   :进入主页;
   :浏览内容;
@@ -462,13 +602,17 @@ else (否)
   :显示错误信息;
   stop
 endif
-:登出;
+:登出系统;
 stop
 @enduml`;
               break;
 
             case "component":
               exampleCode = `@startuml
+skinparam backgroundColor #f9f9f9
+skinparam componentBorderColor #2c3e50
+skinparam componentBackgroundColor #e9ecef
+
 package "前端" {
   [Web浏览器] as Browser
   [移动应用] as App
@@ -488,7 +632,7 @@ API --> DB : 查询数据
 
           editor.value = exampleCode;
           renderDiagram();
-          status.textContent = `已加载${type}示例`;
+          updateStatus(`已加载${detectDiagramType(exampleCode)}示例`);
         }
       });
     </script>
