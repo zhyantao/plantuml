@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantUML 实时图表生成器</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="main-content">
+            <div class="editor-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-edit"></i> 编辑区</div>
+                    <button class="btn btn-primary" id="render-btn">
+                        <i class="fas fa-sync-alt"></i> 生成图表
+                    </button>
+                    <button class="btn btn-secondary" id="format-btn">
+                        <i class="fas fa-indent"></i> 格式化代码
+                    </button>
+                    <button class="btn btn-secondary" id="clear-btn">
+                        <i class="fas fa-broom"></i> 清空
+                    </button>
+                </div>
+                <textarea id="uml-editor" class="editor" placeholder="在此处编写您的PlantUML代码...">@startuml
+skinparam backgroundColor #f9f9f9
+skinparam sequenceArrowColor #4ca1af
+skinparam sequenceActorBorderColor #2c3e50
+skinparam sequenceLifeLineBorderColor #2c3e50
+
+actor 用户 as user
+participant "Web浏览器" as browser
+participant "服务器" as server
+
+user -> browser: 输入PlantUML代码
+browser -> server: 发送代码生成请求
+server -> server: 处理代码并生成图表
+server -> browser: 返回图表图像
+browser -> user: 显示生成的图表
+@enduml</textarea>
+            </div>
+
+            <div class="preview-panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-image"></i> 预览区</div>
+                    <div class="format-selector">
+                        <label for="format-select">输出格式:</label>
+                        <select id="format-select">
+                            <option value="svg">SVG</option>
+                            <option value="png">PNG</option>
+                            <option value="jpg">JPG</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="export-btn">
+                        <i class="fas fa-download"></i> 导出
+                    </button>
+                </div>
+                <div id="preview" class="preview">
+                    <div style="text-align:center;">
+                        <p style="margin-bottom:15px;color:#4ca1af;font-weight:bold;">图表预览</p>
+                        <div
+                            style="padding:20px;border:2px dashed #4ca1af;border-radius:8px;display:inline-block;background:#f9f9f9;">
+                            <p><i class="fas fa-project-diagram" style="font-size:2.5rem;color:#4ca1af;"></i></p>
+                            <div id="error" class="error"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="examples">
+            <h3><i class="fas fa-lightbulb"></i> 示例代码</h3>
+            <div class="example-buttons">
+                <button class="example-btn" data-example="sequence"><i class="fas fa-exchange-alt"></i> 序列图</button>
+                <button class="example-btn" data-example="usecase"><i class="fas fa-use-case"></i> 用例图</button>
+                <button class="example-btn" data-example="class"><i class="fas fa-cubes"></i> 类图</button>
+                <button class="example-btn" data-example="activity"><i class="fas fa-running"></i> 活动图</button>
+                <button class="example-btn" data-example="component"><i class="fas fa-puzzle-piece"></i> 组件图</button>
+            </div>
+        </div>
+
+        <div class="status" id="status">
+            <div class="spinner" id="spinner" style="display: none;"></div>
+            <span id="status-text">就绪</span>
+        </div>
+    </div>
+
+    <footer>
+        <p>PlantUML 实时图表生成器 &copy; 2023 | 使用 PlantUML 库版本 1.2024.6</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+
+</html>
