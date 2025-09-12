@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 设置初始状态
     let isProcessing = false;
+    window.lastGeneratedFile = null;
 
     // 初始渲染
     renderDiagram();
@@ -26,29 +27,27 @@ document.addEventListener('DOMContentLoaded', function () {
     // 清空按钮点击事件
     clearBtn.addEventListener('click', function () {
         editor.value = '';
-        preview.innerHTML = `
-        <div style="text-align:center;">
-            <p style="margin-bottom:15px;color:#4ca1af;font-weight:bold;">图表预览</p>
-            <div
-                style="padding:20px;border:2px dashed #4ca1af;border-radius:8px;display:inline-block;background:#f9f9f9;">
-                <p><i class="fas fa-project-diagram" style="font-size:2.5rem;color:#4ca1af;"></i></p>
-                <div id="error" class="error"></div>
-            </div>
-        </div>`;
+        preview.innerHTML = '<p>图表将在此处显示...</p>';
         errorDiv.style.display = 'none';
+        window.lastGeneratedFile = null;
         updateStatus('编辑器已清空');
     });
 
     // 导出按钮点击事件
     exportBtn.addEventListener('click', function () {
         const format = formatSelect.value;
-        updateStatus(`正在导出${format.toUpperCase()}...`, true);
 
-        // 在实际实现中，这里会调用导出功能
-        renderDiagram(true).then(() => {
-            updateStatus(`导出完成 (${format.toUpperCase()})`);
-            alert(`在完整实现中，这里将导出${format.toUpperCase()}图像。`);
-        });
+        if (!window.lastGeneratedFile || window.lastGeneratedFile.format !== format) {
+            // 如果还没有生成过图表或者格式不同，先生成再下载
+            renderDiagram(true).then(() => {
+                if (window.lastGeneratedFile) {
+                    triggerDownload(window.lastGeneratedFile.file_id, format);
+                }
+            });
+        } else {
+            // 直接下载
+            triggerDownload(window.lastGeneratedFile.file_id, format);
+        }
     });
 
     // 格式化按钮点击事件
@@ -95,6 +94,18 @@ document.addEventListener('DOMContentLoaded', function () {
         spinner.style.display = showSpinner ? 'block' : 'none';
     }
 
+    // 触发下载的函数
+    function triggerDownload(file_id, format) {
+        const downloadUrl = `/download/${file_id}.${format}`;
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `plantuml-diagram.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        updateStatus(`正在下载${format.toUpperCase()}文件`);
+    }
+
     // 渲染图表函数
     async function renderDiagram(isExport = false) {
         if (isProcessing) return;
@@ -126,23 +137,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const data = await response.json();
 
-            if (!response.ok) {
-                // 显示更详细的错误信息
-                const errorMsg = data.error || '生成图表时出错';
-                throw new Error(`服务器错误 (${response.status}): ${errorMsg}`);
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || '生成图表时出错');
             }
 
-            if (format === 'svg' && data.svg) {
-                preview.innerHTML = data.svg;
-            } else if (data.image) {
-                // 对于PNG/JPG等二进制格式
+            // 保存文件信息用于下载
+            window.lastGeneratedFile = data;
+
+            // 显示预览
+            if (format === 'svg') {
+                const previewResponse = await fetch(`/preview/${data.file_id}.${data.format}`);
+                if (!previewResponse.ok) {
+                    throw new Error('预览加载失败');
+                }
+                const svgContent = await previewResponse.text();
+                preview.innerHTML = svgContent;
+            } else {
                 const img = document.createElement('img');
-                img.src = `data:image/${format};base64,${data.image}`;
+                img.src = `/preview/${data.file_id}.${data.format}`;
                 img.alt = 'PlantUML Diagram';
+                img.onerror = function () {
+                    throw new Error('图片加载失败');
+                };
                 preview.innerHTML = '';
                 preview.appendChild(img);
-            } else {
-                throw new Error('无法显示图表: 服务器返回的数据格式不正确');
             }
 
             updateStatus('图表已生成');
@@ -153,18 +171,17 @@ document.addEventListener('DOMContentLoaded', function () {
             errorDiv.style.display = 'block';
             updateStatus('生成图表时出错');
 
-            // 显示临时目录中的图片（如果存在）
-            showTempImageIfExists();
+            // 显示错误状态
+            preview.innerHTML = `
+                <div style="text-align:center; color:#e74c3c; padding:20px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size:3rem;"></i>
+                    <p>图表生成失败</p>
+                    <p style="font-size:0.9rem;">${error.message}</p>
+                </div>
+            `;
         } finally {
             isProcessing = false;
         }
-    }
-
-    // 显示临时目录中的图片（用于调试）
-    function showTempImageIfExists() {
-        // 这个函数主要用于调试，在实际部署中可以移除
-        console.log("检查临时目录中的图片...");
-        // 这里可以添加逻辑来显示临时目录中的图片
     }
 
     // 检测图表类型
