@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PlantUML 实时编辑器</title>
+    <script src="plantuml-1.2024.6.jar" type="text/javascript"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f5f7fa;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      header {
+        background: linear-gradient(135deg, #2c3e50, #4ca1af);
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+      }
+
+      .description {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .main-content {
+        display: flex;
+        min-height: 600px;
+      }
+
+      @media (max-width: 900px) {
+        .main-content {
+          flex-direction: column;
+        }
+      }
+
+      .editor-panel,
+      .preview-panel {
+        flex: 1;
+        padding: 20px;
+      }
+
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #eee;
+      }
+
+      .panel-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .editor {
+        width: 100%;
+        height: 500px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 15px;
+        font-family: "Courier New", monospace;
+        font-size: 14px;
+        resize: none;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .preview {
+        width: 100%;
+        min-height: 500px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f9f9f9;
+        overflow: auto;
+        padding: 20px;
+      }
+
+      .preview img {
+        max-width: 100%;
+      }
+
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        padding: 15px 20px;
+        background-color: #f0f4f8;
+        border-top: 1px solid #ddd;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #2c3e50, #4ca1af);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: linear-gradient(135deg, #4ca1af, #2c3e50);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn-secondary {
+        background: #e9ecef;
+        color: #495057;
+      }
+
+      .btn-secondary:hover {
+        background: #dee2e6;
+      }
+
+      .examples {
+        margin-top: 20px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+      }
+
+      .examples h3 {
+        margin-bottom: 15px;
+        color: #2c3e50;
+      }
+
+      .example-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .example-btn {
+        padding: 8px 15px;
+        background-color: #e9ecef;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .example-btn:hover {
+        background-color: #4ca1af;
+        color: white;
+      }
+
+      .status {
+        padding: 10px 20px;
+        background-color: #f0f4f8;
+        text-align: center;
+        font-style: italic;
+        color: #6c757d;
+        border-top: 1px solid #ddd;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 20px;
+        color: #6c757d;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>PlantUML 实时编辑器</h1>
+      </header>
+
+      <div class="main-content">
+        <div class="editor-panel">
+          <div class="panel-header">
+            <div class="panel-title">编辑区</div>
+            <button class="btn btn-secondary" id="clear-btn">清空</button>
+          </div>
+          <textarea
+            id="uml-editor"
+            class="editor"
+            placeholder="在此处编写您的PlantUML代码..."
+          >
+@startuml
+actor 用户 as user
+participant "Web浏览器" as browser
+participant "服务器" as server
+
+user -> browser: 输入PlantUML代码
+browser -> server: 发送代码生成请求
+server -> server: 处理代码并生成图表
+server -> browser: 返回图表图像
+browser -> user: 显示生成的图表
+@enduml</textarea
+          >
+        </div>
+
+        <div class="preview-panel">
+          <div class="panel-header">
+            <div class="panel-title">预览区</div>
+            <button class="btn btn-primary" id="export-btn">导出PNG</button>
+          </div>
+          <div id="preview" class="preview">
+            <p>图表将在此处显示...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="examples">
+        <h3>示例代码</h3>
+        <div class="example-buttons">
+          <button class="example-btn" data-example="sequence">序列图</button>
+          <button class="example-btn" data-example="usecase">用例图</button>
+          <button class="example-btn" data-example="class">类图</button>
+          <button class="example-btn" data-example="activity">活动图</button>
+          <button class="example-btn" data-example="component">组件图</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn btn-primary" id="render-btn">生成图表</button>
+        <button class="btn btn-secondary" id="format-btn">格式化代码</button>
+      </div>
+
+      <div class="status" id="status">就绪</div>
+    </div>
+
+    <footer>
+      <p>PlantUML 实时编辑器 &copy; 2023 | 使用 PlantUML 库版本 1.2024.6</p>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const editor = document.getElementById("uml-editor");
+        const preview = document.getElementById("preview");
+        const renderBtn = document.getElementById("render-btn");
+        const clearBtn = document.getElementById("clear-btn");
+        const exportBtn = document.getElementById("export-btn");
+        const formatBtn = document.getElementById("format-btn");
+        const status = document.getElementById("status");
+        const exampleBtns = document.querySelectorAll(".example-btn");
+
+        // 初始渲染
+        renderDiagram();
+
+        // 监听编辑器变化
+        editor.addEventListener("input", debounce(renderDiagram, 1000));
+
+        // 渲染按钮点击事件
+        renderBtn.addEventListener("click", renderDiagram);
+
+        // 清空按钮点击事件
+        clearBtn.addEventListener("click", function () {
+          editor.value = "";
+          preview.innerHTML = "<p>图表将在此处显示...</p>";
+          status.textContent = "编辑器已清空";
+        });
+
+        // 导出按钮点击事件
+        exportBtn.addEventListener("click", function () {
+          status.textContent = "导出功能需要服务器端支持";
+          alert("在完整实现中，这里将导出PNG图像。当前为演示版本。");
+        });
+
+        // 格式化按钮点击事件
+        formatBtn.addEventListener("click", function () {
+          status.textContent = "格式化功能需要额外实现";
+          alert("在完整实现中，这里将格式化PlantUML代码。当前为演示版本。");
+        });
+
+        // 示例按钮点击事件
+        exampleBtns.forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const exampleType = this.getAttribute("data-example");
+            loadExample(exampleType);
+          });
+        });
+
+        // 防抖函数
+        function debounce(func, wait) {
+          let timeout;
+          return function () {
+            const context = this;
+            const args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+              func.apply(context, args);
+            }, wait);
+          };
+        }
+
+        // 渲染图表函数
+        function renderDiagram() {
+          const umlCode = editor.value.trim();
+          status.textContent = "正在生成图表...";
+
+          if (!umlCode) {
+            preview.innerHTML = "<p>请输入PlantUML代码</p>";
+            status.textContent = "就绪";
+            return;
+          }
+
+          try {
+            // 在实际实现中，这里会调用PlantUML库来生成图表
+            // 由于浏览器限制，完整的PlantUML渲染可能需要服务器支持
+            // 这里使用模拟渲染
+
+            // 模拟渲染延迟
+            setTimeout(() => {
+              preview.innerHTML = `
+                            <div style="text-align:center;">
+                                <p style="margin-bottom:15px;color:#4ca1af;font-weight:bold;">图表预览</p>
+                                <div style="padding:20px;border:2px dashed #4ca1af;border-radius:5px;display:inline-block;">
+                                    <p>实际图表渲染需要</p>
+                                    <p>完整的PlantUML服务器环境</p>
+                                </div>
+                                <p style="margin-top:15px;font-size:0.9rem;color:#6c757d;">
+                                    当前代码行数: ${umlCode.split("\n").length}
+                                </p>
+                            </div>
+                        `;
+              status.textContent = "图表已生成 (模拟)";
+            }, 500);
+          } catch (error) {
+            preview.innerHTML = `<p style="color:red;">错误: ${error.message}</p>`;
+            status.textContent = "生成图表时出错";
+          }
+        }
+
+        // 加载示例代码
+        function loadExample(type) {
+          let exampleCode = "";
+
+          switch (type) {
+            case "sequence":
+              exampleCode = `@startuml
+actor User
+participant "First Component" as A
+participant "Second Component" as B
+participant "Last Component" as C
+
+User -> A: DoWork
+activate A
+
+A -> B: CreateRequest
+activate B
+
+B -> C: DoWork
+activate C
+C --> B: WorkDone
+destroy C
+
+B --> A: RequestCreated
+deactivate B
+
+A --> User: Done
+deactivate A
+@enduml`;
+              break;
+
+            case "usecase":
+              exampleCode = `@startuml
+left to right direction
+actor Guest as g
+actor Customer as c
+actor "Admin" as a
+
+usecase "View Products" as UC1
+usecase "Purchase" as UC2
+usecase "Manage Products" as UC3
+usecase "Manage Users" as UC4
+
+g --> UC1
+c --> UC1
+c --> UC2
+a --> UC3
+a --> UC4
+@enduml`;
+              break;
+
+            case "class":
+              exampleCode = `@startuml
+class ArrayList {
+  - Object[] elementData
+  - int size
+  + ArrayList()
+  + add(Object e)
+  + get(int index)
+  + remove(int index)
+  + size()
+}
+
+class LinkedList {
+  - Node first
+  - Node last
+  - int size
+  + LinkedList()
+  + add(Object e)
+  + get(int index)
+  + remove(int index)
+  + size()
+}
+
+interface List {
+  + add(Object e)
+  + get(int index)
+  + remove(int index)
+  + size()
+}
+
+List <|.. ArrayList
+List <|.. LinkedList
+@enduml`;
+              break;
+
+            case "activity":
+              exampleCode = `@startuml
+start
+:登录网站;
+if (用户名和密码正确?) then (是)
+  :进入主页;
+  :浏览内容;
+  if (想要购买?) then (是)
+    :下订单;
+    :支付;
+    :确认订单;
+  else (否)
+    :继续浏览;
+  endif
+else (否)
+  :显示错误信息;
+  stop
+endif
+:登出;
+stop
+@enduml`;
+              break;
+
+            case "component":
+              exampleCode = `@startuml
+package "前端" {
+  [Web浏览器] as Browser
+  [移动应用] as App
+}
+
+package "后端" {
+  [API服务器] as API
+  [数据库] as DB
+}
+
+Browser --> API : HTTP请求
+App --> API : HTTP请求
+API --> DB : 查询数据
+@enduml`;
+              break;
+          }
+
+          editor.value = exampleCode;
+          renderDiagram();
+          status.textContent = `已加载${type}示例`;
+        }
+      });
+    </script>
+  </body>
+</html>
