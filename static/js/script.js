@@ -50,15 +50,25 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // 格式化按钮点击事件
+    // 格式化按钮点击事件 - 修改后的实现
     formatBtn.addEventListener('click', function () {
         updateStatus('正在格式化代码...');
 
-        // 简单的格式化：确保@startuml和@enduml单独成行
-        const code = editor.value;
-        editor.value = code.replace(/\s*@startuml\s*/g, '\n@startuml\n')
-            .replace(/\s*@enduml\s*/g, '\n@enduml\n')
-            .replace(/\n{3,}/g, '\n\n');
+        // 获取当前代码
+        let code = editor.value;
+
+        // 1. 确保@startuml和@enduml单独成行
+        code = code.replace(/\s*@startuml\s*/g, '\n@startuml\n')
+            .replace(/\s*@enduml\s*/g, '\n@enduml\n');
+
+        // 2. 处理if/else等关键字的缩进
+        code = formatPlantUMLCode(code);
+
+        // 3. 移除多余的空行
+        code = code.replace(/\n{3,}/g, '\n\n');
+
+        // 4. 设置编辑器内容
+        editor.value = code;
         updateStatus('代码已格式化');
     });
 
@@ -104,6 +114,57 @@ document.addEventListener('DOMContentLoaded', function () {
         a.click();
         document.body.removeChild(a);
         updateStatus(`正在下载${format.toUpperCase()}文件`);
+    }
+
+    // PlantUML代码格式化函数
+    function formatPlantUMLCode(code) {
+        const lines = code.split('\n');
+        let formattedLines = [];
+        let indentLevel = 0;
+        const indentSize = 4;
+
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+
+            if (line.length === 0) {
+                formattedLines.push('');
+                continue;
+            }
+
+            // 处理结束标签 - 在添加行之前减少缩进
+            if (line.startsWith('endif') || line.startsWith('end') ||
+                line.startsWith('}') || line.startsWith('else') || line.startsWith('elseif') ||
+                line.startsWith('fork again') || line.startsWith('end fork') ||
+                line.startsWith('end while') || line.startsWith('end loop') ||
+                line.startsWith('repeat while')
+            ) {
+                indentLevel = Math.max(0, indentLevel - 1);
+            }
+
+            // 添加当前行的缩进
+            const indent = ' '.repeat(indentLevel * indentSize);
+            formattedLines.push(indent + line);
+
+            // 处理开始标签 - 在添加行之后增加缩进
+            if (line.startsWith('if') || line.startsWith('fork') ||
+                line.startsWith('loop') || line.startsWith('while') ||
+                line.startsWith('split') || line.startsWith('{') ||
+                line.startsWith('partition') ||
+                (!line.startsWith('repeat while') && line.startsWith('repeat')) ||
+                line.startsWith('class') || line.startsWith('interface') ||
+                line.startsWith('abstract class') || line.startsWith('enum') ||
+                line.startsWith('package') || line.startsWith('namespace')
+            ) {
+                indentLevel++;
+            }
+
+            // 处理 else/elseif - 在添加行之后增加缩进
+            if (line.startsWith('else') || line.startsWith('elseif')) {
+                indentLevel++;
+            }
+        }
+
+        return formattedLines.join('\n');
     }
 
     // 渲染图表函数
