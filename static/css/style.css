@@ -111,8 +111,7 @@ h1 {
     height: 500px;
     border: 1px solid #ddd;
     border-radius: 8px;
-    align-items: flex-start;
-    justify-content: flex-start;
+    display: grid;
     background: #f9f9f9;
     overflow: auto;
     padding: 25px;
