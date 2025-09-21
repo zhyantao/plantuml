@@ -32,10 +32,10 @@ skinparam sequenceActorBorderColor #2c3e50
 skinparam sequenceLifeLineBorderColor #2c3e50
 
 actor 用户 as user
-participant "Web浏览器" as browser
+participant "Web 浏览器" as browser
 participant "服务器" as server
 
-user -> browser: 输入PlantUML代码
+user -> browser: 输入 PlantUML 代码
 browser -> server: 发送代码生成请求
 server -> server: 处理代码并生成图表
 server -> browser: 返回图表图像
@@ -51,7 +51,6 @@ browser -> user: 显示生成的图表
                         <select id="format-select">
                             <option value="svg">SVG</option>
                             <option value="png">PNG</option>
-                            <option value="jpg">JPG</option>
                         </select>
                     </div>
                     <button class="btn btn-primary" id="export-btn">
@@ -89,7 +88,7 @@ browser -> user: 显示生成的图表
     </div>
 
     <footer>
-        <p>PlantUML 实时图表生成器 &copy; 2023 | 使用 PlantUML 库版本 1.2024.6</p>
+        <p>PlantUML 实时图表生成器 &copy; 2025 | 作者: yantao.z [at] outlook.com | 使用 PlantUML 库版本 1.2024.6</p>
     </footer>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>

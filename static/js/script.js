@@ -27,7 +27,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // 清空按钮点击事件
     clearBtn.addEventListener('click', function () {
         editor.value = '';
-        preview.innerHTML = '<p>图表将在此处显示...</p>';
+        preview.innerHTML = `
+                    <div style="text-align:center;">
+                        <p style="margin-bottom:15px;color:#4ca1af;font-weight:bold;">图表预览</p>
+                        <div
+                            style="padding:20px;border:2px dashed #4ca1af;border-radius:8px;display:inline-block;background:#f9f9f9;">
+                            <p><i class="fas fa-project-diagram" style="font-size:2.5rem;color:#4ca1af;"></i></p>
+                            <div id="error" class="error"></div>
+                        </div>
+                    </div>`;
         errorDiv.style.display = 'none';
         window.lastGeneratedFile = null;
         updateStatus('编辑器已清空');
@@ -54,14 +62,10 @@ document.addEventListener('DOMContentLoaded', function () {
     formatBtn.addEventListener('click', function () {
         updateStatus('正在格式化代码...');
 
-        // 获取当前代码
+        // 1. 获取当前代码
         let code = editor.value;
 
-        // 1. 确保@startuml和@enduml单独成行
-        code = code.replace(/\s*@startuml\s*/g, '\n@startuml\n')
-            .replace(/\s*@enduml\s*/g, '\n@enduml\n');
-
-        // 2. 处理if/else等关键字的缩进
+        // 2. 处理 if/else 等关键字的缩进
         code = formatPlantUMLCode(code);
 
         // 3. 移除多余的空行
@@ -116,12 +120,12 @@ document.addEventListener('DOMContentLoaded', function () {
         updateStatus(`正在下载${format.toUpperCase()}文件`);
     }
 
-    // PlantUML代码格式化函数
+    // PlantUML 代码格式化函数
     function formatPlantUMLCode(code) {
         const lines = code.split('\n');
         let formattedLines = [];
         let indentLevel = 0;
-        const indentSize = 4;
+        const indentSize = 2;
 
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].trim();
@@ -133,7 +137,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // 处理结束标签 - 在添加行之前减少缩进
             if (line.startsWith('endif') || line.startsWith('end') ||
-                line.startsWith('}') || line.startsWith('else') || line.startsWith('elseif') ||
+                line.startsWith('}') || line.startsWith(']') ||
+                line.startsWith('else') || line.startsWith('elseif') ||
                 line.startsWith('fork again') || line.startsWith('end fork') ||
                 line.startsWith('end while') || line.startsWith('end loop') ||
                 line.startsWith('repeat while')
@@ -146,15 +151,12 @@ document.addEventListener('DOMContentLoaded', function () {
             formattedLines.push(indent + line);
 
             // 处理开始标签 - 在添加行之后增加缩进
-            if (line.startsWith('if') || line.startsWith('fork') ||
+            if ((line.startsWith('if') || line.startsWith('fork') ||
                 line.startsWith('loop') || line.startsWith('while') ||
-                line.startsWith('split') || line.startsWith('{') ||
-                line.startsWith('partition') ||
+                line.startsWith('split') || line.startsWith('partition') ||
                 (!line.startsWith('repeat while') && line.startsWith('repeat')) ||
-                line.startsWith('class') || line.startsWith('interface') ||
-                line.startsWith('abstract class') || line.startsWith('enum') ||
-                line.startsWith('package') || line.startsWith('namespace')
-            ) {
+                line.endsWith('{') || line.endsWith('[')
+            )) {
                 indentLevel++;
             }
 
@@ -177,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
         errorDiv.style.display = 'none';
 
         if (!umlCode) {
-            preview.innerHTML = '<p>请输入PlantUML代码</p>';
+            preview.innerHTML = '<p>请输入 PlantUML 代码</p>';
             updateStatus('就绪');
             return;
         }

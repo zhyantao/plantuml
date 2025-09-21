@@ -1,3 +1,3 @@
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-uwsgi --http :8000 --wsgi-file app.py --callable app
+waitress-serve --listen=127.0.0.1:8000 app:app

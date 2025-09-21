@@ -9,7 +9,7 @@ app = Flask(__name__)
 # 配置
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 JAR_DIR = os.path.join(CURRENT_DIR, 'jars')
-PLANTUML_JAR = os.path.join(JAR_DIR, 'plantuml-1.2024.6.jar')
+PLANTUML_JAR = os.path.join(JAR_DIR, 'plantuml-1.2025.7.jar')
 TEMP_DIR = os.path.join(CURRENT_DIR, 'temp')
 os.makedirs(TEMP_DIR, exist_ok=True)
 
@@ -54,7 +54,7 @@ def generate_diagram():
         # 添加额外的 JAR 文件到类路径
         env = os.environ.copy()
         jar_files = [f for f in os.listdir(JAR_DIR) if f.endswith(
-            '.jar') and f != 'plantuml-1.2024.6.jar']
+            '.jar') and f != 'plantuml-1.2025.7.jar']
         if jar_files:
             classpath = os.pathsep.join(
                 [os.path.join(JAR_DIR, jar) for jar in jar_files])
@@ -157,12 +157,12 @@ def download_diagram(file_id, format):
 @app.route('/health')
 def health_check():
     try:
-        # 检查Java是否可用
+        # 检查 Java 是否可用
         result = subprocess.run(['java', '-version'],
                                 capture_output=True, text=True)
         java_available = result.returncode == 0
 
-        # 检查PlantUML JAR文件是否存在
+        # 检查 PlantUML JAR 文件是否存在
         plantuml_jar_exists = os.path.exists(PLANTUML_JAR)
 
         return jsonify({
