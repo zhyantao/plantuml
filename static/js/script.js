@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        updateStatus(`正在下载${format.toUpperCase()}文件`);
+        updateStatus(`正在下载 ${format.toUpperCase()} 文件`);
     }
 
     // PlantUML 代码格式化函数
