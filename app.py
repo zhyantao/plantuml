@@ -1,12 +1,10 @@
 from flask import Flask, render_template, request, jsonify, send_file
-from flask_cors import CORS
 import os
 import subprocess
 import uuid
 from pathlib import Path
 
 app = Flask(__name__)
-CORS(app)  # 允许跨域请求
 
 # 配置
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
